@@ -142,7 +142,7 @@ cp .env.example .env
 Edit `/opt/games-umalii/squarify/.env`:
 
 ```env
-BACKEND_PORT=3000
+HOST_BACKEND_PORT=3010
 CORS_ORIGIN=https://games.umalii.com
 ```
 
@@ -159,6 +159,12 @@ cd /opt/games-umalii/squarify
 docker compose up -d --build
 ```
 
+Why `HOST_BACKEND_PORT`:
+
+- the backend inside Docker listens on container port `3000`
+- Docker publishes that container port to a host port you choose
+- for your VPS, use `3010` so it does not conflict with existing services
+
 ### 4. Verify backend before touching Caddy
 
 ```bash
@@ -172,6 +178,12 @@ Expected health response:
 
 ```json
 {"status":"ok","service":"squarify-backend"}
+```
+
+For your VPS with `HOST_BACKEND_PORT=3010`, use:
+
+```bash
+curl http://127.0.0.1:3010/health
 ```
 
 ## Frontend deployment for `games.umalii.com/squarify/`
