@@ -9,6 +9,7 @@ Squarify is a complete Dots and Boxes MVP with:
 
 Deployment target:
 
+- landing page: `https://games.umalii.com/`
 - frontend: `https://games.umalii.com/squarify/`
 - backend: `https://games.umalii.com/squarify-api/`
 
@@ -36,6 +37,7 @@ squarify/
   android/
   backend/
   frontend/
+  portal/
   docker-compose.yml
   .env.example
   README.md
@@ -217,6 +219,17 @@ sudo mkdir -p /var/www/games-umalii/squarify
 sudo rsync -av --delete /opt/games-umalii/squarify/frontend/dist/ /var/www/games-umalii/squarify/
 ```
 
+## Landing page deployment for `games.umalii.com`
+
+This repo also includes a static landing page that lists the available games and links to Squarify.
+
+Deploy it with:
+
+```bash
+sudo mkdir -p /var/www/games-umalii/home
+sudo rsync -av --delete /opt/games-umalii/squarify/portal/ /var/www/games-umalii/home/
+```
+
 ## Caddy configuration
 
 You said Caddy is already serving other services. Do not replace the whole config. Add only the needed route blocks inside the existing `games.umalii.com` site block.
@@ -232,14 +245,19 @@ Inside the existing `games.umalii.com` block, add:
 
 ```caddy
 handle_path /squarify-api/* {
-    reverse_proxy 127.0.0.1:3000
+    reverse_proxy 127.0.0.1:3010
 }
 
 redir /squarify /squarify/ 308
 
-handle /squarify/* {
+handle_path /squarify/* {
     root * /var/www/games-umalii/squarify
     try_files {path} /index.html
+    file_server
+}
+
+handle {
+    root * /var/www/games-umalii/home
     file_server
 }
 ```
@@ -249,6 +267,7 @@ Important:
 - `handle_path /squarify-api/*` strips `/squarify-api` before proxying
 - so `/squarify-api/api/games` reaches the backend as `/api/games`
 - `try_files {path} /index.html` keeps the frontend SPA working under `/squarify/`
+- the final `handle` serves the root `games.umalii.com` landing page
 
 ### Validate and reload Caddy
 

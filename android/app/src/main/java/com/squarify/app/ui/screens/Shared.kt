@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -32,6 +33,7 @@ fun ScreenFrame(
             .fillMaxSize()
             .background(Brush.verticalGradient(listOf(Color(0xFFFFF7ED), Color(0xFFF1F5F9))))
             .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(20.dp)
     ) {
         Column(
