@@ -326,7 +326,6 @@ export default function App() {
               game={game}
               disabled={loading || (mode === modes.ONLINE && !isMyTurn) || game.status !== GameStatus.ACTIVE}
               onMove={handleMove}
-              useNeutralClaimedLines={mode === modes.LOCAL}
             />
 
             <div className="actions">
