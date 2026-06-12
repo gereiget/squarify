@@ -7,9 +7,10 @@ Squarify is a complete Dots and Boxes MVP with:
 - `backend/`: Node.js + Express multiplayer API in TypeScript
 - `docker-compose.yml`: VPS backend deployment entrypoint
 
-The web app is configured to be deployable under:
+Deployment target:
 
-- `https://games.umalii.com/squarify/`
+- frontend: `https://games.umalii.com/squarify/`
+- backend: `https://games.umalii.com/squarify-api/`
 
 ## Public repo safety
 
@@ -21,12 +22,12 @@ This repo is prepared for public upload:
 - backend CORS is configurable and defaults should be locked down in production
 - no credentials or private keys are included in source
 
-Before pushing, keep these rules:
+Do not commit:
 
-- never commit `.env`
-- never commit VPS SSH keys
-- never commit Android signing keys or `keystore` files
-- never change `CORS_ORIGIN` to `*` in production unless you intentionally want a public API
+- `.env`
+- SSH keys
+- Android signing keys / keystore files
+- VPS-specific reverse proxy config with secrets if you later add any
 
 ## Project structure
 
@@ -85,7 +86,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-Important frontend env values:
+Frontend env values:
 
 - `VITE_API_BASE_URL=http://localhost:3000/`
 - `VITE_APP_BASE_PATH=/squarify/`
@@ -108,158 +109,167 @@ cd android
 
 Backend URL for Android is defined in `android/app/src/main/java/com/squarify/app/Config.kt`.
 
-## Production backend deployment on VPS
+## VPS deployment
 
-These steps assume Ubuntu and Docker deployment for the backend only.
+These instructions assume your VPS already has:
 
-### 1. Install Docker
+- Docker
+- Docker Compose plugin
+- Caddy
+- an existing `games.umalii.com` site
 
-```bash
-sudo apt update
-sudo apt install -y ca-certificates curl gnupg
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin nginx
-sudo usermod -aG docker $USER
-```
+They avoid installing or replacing those services.
 
-Log out and back in after `usermod`.
+### Folder layout on VPS
 
-### 2. Download the repo on the VPS
+Use:
+
+- `/opt/games-umalii/squarify`
+
+### 1. Create the project folder and clone
 
 ```bash
+cd /opt
+mkdir -p games-umalii
+cd games-umalii
 git clone https://github.com/gereiget/squarify.git
 cd squarify
 cp .env.example .env
 ```
 
-### 3. Configure the backend environment
+### 2. Configure backend env
 
-Edit `.env`:
+Edit `/opt/games-umalii/squarify/.env`:
 
 ```env
 BACKEND_PORT=3000
 CORS_ORIGIN=https://games.umalii.com
 ```
 
-If you will also serve the frontend from additional origins during testing, use a comma-separated allowlist:
+If you need more than one allowed origin, use a comma-separated list:
 
 ```env
-CORS_ORIGIN=https://games.umalii.com,https://staging.games.umalii.com
+CORS_ORIGIN=https://games.umalii.com,https://staging.example.com
 ```
 
-### 4. Start the backend container
+### 3. Start backend container
 
 ```bash
+cd /opt/games-umalii/squarify
 docker compose up -d --build
 ```
 
-### 5. Verify backend health
+### 4. Verify backend before touching Caddy
 
 ```bash
+cd /opt/games-umalii/squarify
 docker compose ps
-docker compose logs -f backend
+docker compose logs --tail=100 backend
 curl http://127.0.0.1:3000/health
 ```
 
-## Web frontend deployment for `games.umalii.com/squarify`
+Expected health response:
 
-The frontend is static. Build it locally or on the VPS:
+```json
+{"status":"ok","service":"squarify-backend"}
+```
+
+## Frontend deployment for `games.umalii.com/squarify/`
+
+### 1. Build the frontend
 
 ```bash
-cd frontend
+cd /opt/games-umalii/squarify/frontend
 cp .env.example .env
 ```
 
-Edit `frontend/.env`:
+Edit `/opt/games-umalii/squarify/frontend/.env`:
 
 ```env
-VITE_API_BASE_URL=https://api.games.umalii.com/
+VITE_API_BASE_URL=https://games.umalii.com/squarify-api/
 VITE_APP_BASE_PATH=/squarify/
 ```
 
-Then build:
+Build:
 
 ```bash
+cd /opt/games-umalii/squarify/frontend
 npm install
 npm run build
 ```
 
-Copy the generated `frontend/dist` contents to a web root such as:
-
-- `/var/www/squarify`
-
-Example:
+### 2. Copy built frontend to a static folder
 
 ```bash
-sudo mkdir -p /var/www/squarify
-sudo cp -r dist/* /var/www/squarify/
+sudo mkdir -p /var/www/games-umalii/squarify
+sudo rsync -av --delete /opt/games-umalii/squarify/frontend/dist/ /var/www/games-umalii/squarify/
 ```
 
-## Suggested Nginx setup
+## Caddy configuration
 
-Recommended split:
+You said Caddy is already serving other services. Do not replace the whole config. Add only the needed route blocks inside the existing `games.umalii.com` site block.
 
-- frontend: `https://games.umalii.com/squarify/`
-- backend: `https://api.games.umalii.com/`
+Before editing, back up the current config:
 
-Example backend Nginx config:
+```bash
+sudo cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.backup-$(date +%F-%H%M%S)
+sudo caddy validate --config /etc/caddy/Caddyfile
+```
 
-```nginx
-server {
-    listen 80;
-    server_name api.games.umalii.com;
+Inside the existing `games.umalii.com` block, add:
 
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
+```caddy
+handle_path /squarify-api/* {
+    reverse_proxy 127.0.0.1:3000
+}
+
+redir /squarify /squarify/ 308
+
+handle /squarify/* {
+    root * /var/www/games-umalii/squarify
+    try_files {path} /index.html
+    file_server
 }
 ```
 
-Example frontend Nginx config:
+Important:
 
-```nginx
-server {
-    listen 80;
-    server_name games.umalii.com;
+- `handle_path /squarify-api/*` strips `/squarify-api` before proxying
+- so `/squarify-api/api/games` reaches the backend as `/api/games`
+- `try_files {path} /index.html` keeps the frontend SPA working under `/squarify/`
 
-    location = /squarify {
-        return 301 /squarify/;
-    }
-
-    location /squarify/ {
-        alias /var/www/squarify/;
-        try_files $uri $uri/ /squarify/index.html;
-    }
-}
-```
-
-Enable and test:
+### Validate and reload Caddy
 
 ```bash
-sudo nginx -t
-sudo systemctl reload nginx
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
 ```
 
-## HTTPS
+## End-to-end checks
 
-After DNS is pointed correctly:
+After deployment:
 
 ```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d games.umalii.com -d api.games.umalii.com
+curl https://games.umalii.com/squarify-api/health
 ```
+
+Then open:
+
+- `https://games.umalii.com/squarify/`
+
+## Android production backend URL
+
+For Android online mode, update:
+
+- `android/app/src/main/java/com/squarify/app/Config.kt`
+
+to:
+
+```kotlin
+const val BASE_URL = "https://games.umalii.com/squarify-api/"
+```
+
+Then rebuild and reinstall the app.
 
 ## Build status
 
