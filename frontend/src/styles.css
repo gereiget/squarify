@@ -199,6 +199,15 @@ input {
   gap: 12px;
 }
 
+.build-version {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  opacity: 0.85;
+  word-break: break-word;
+}
+
 .board {
   display: grid;
   gap: 0;

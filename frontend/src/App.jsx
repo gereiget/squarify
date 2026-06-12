@@ -18,6 +18,8 @@ const modes = {
   ONLINE: "online"
 };
 
+const FRONTEND_VERSION = __APP_VERSION__;
+
 export default function App() {
   const [screen, setScreen] = useState(screens.MENU);
   const [mode, setMode] = useState(modes.LOCAL);
@@ -336,6 +338,8 @@ export default function App() {
             </div>
           </section>
         ) : null}
+
+        <footer className="build-version">Frontend build {FRONTEND_VERSION}</footer>
       </main>
     </div>
   );
