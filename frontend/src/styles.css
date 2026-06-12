@@ -203,17 +203,17 @@ input {
   display: grid;
   gap: 0;
   background: linear-gradient(180deg, #fbf4e8, #f4efe8);
-  border-radius: 24px;
-  padding: 10px;
+  border-radius: 22px;
+  padding: 6px;
   border: 1px solid rgba(194, 177, 157, 0.8);
-  width: min(100%, 560px);
+  width: min(100%, 480px);
   margin: 0 auto;
   aspect-ratio: 1;
 }
 
 .board-dot {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   background: #26211c;
   border-radius: 50%;
   align-self: center;
@@ -233,14 +233,14 @@ input {
 }
 
 .board-line-horizontal {
-  width: calc(100% - 10px);
-  height: 18px;
+  width: calc(100% - 6px);
+  height: 20px;
   border-radius: 999px;
 }
 
 .board-line-vertical {
-  width: 18px;
-  height: calc(100% - 10px);
+  width: 20px;
+  height: calc(100% - 6px);
   border-radius: 999px;
 }
 
@@ -265,8 +265,8 @@ input {
 }
 
 .board-box {
-  width: calc(100% - 12px);
-  height: calc(100% - 12px);
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -298,27 +298,27 @@ input {
   }
 
   .board {
-    width: min(100%, 500px);
-    padding: 8px;
+    width: min(100%, 430px);
+    padding: 4px;
   }
 
   .board-dot {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   .board-line-horizontal {
-    width: calc(100% - 8px);
-    height: 14px;
+    width: calc(100% - 4px);
+    height: 16px;
   }
 
   .board-line-vertical {
-    width: 14px;
-    height: calc(100% - 8px);
+    width: 16px;
+    height: calc(100% - 4px);
   }
 
   .board-box {
-    width: calc(100% - 10px);
-    height: calc(100% - 10px);
+    width: calc(100% - 6px);
+    height: calc(100% - 6px);
   }
 }

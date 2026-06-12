@@ -322,7 +322,12 @@ export default function App() {
               </div>
             </div>
 
-            <Board game={game} disabled={loading || (mode === modes.ONLINE && !isMyTurn) || game.status !== GameStatus.ACTIVE} onMove={handleMove} />
+            <Board
+              game={game}
+              disabled={loading || (mode === modes.ONLINE && !isMyTurn) || game.status !== GameStatus.ACTIVE}
+              onMove={handleMove}
+              useNeutralClaimedLines={mode === modes.LOCAL}
+            />
 
             <div className="actions">
               <button className="secondary" type="button" onClick={resetToMenu}>Leave</button>

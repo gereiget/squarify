@@ -1,6 +1,10 @@
 import { Orientation } from "../gameEngine";
 
-function lineOwnerClass(players, line) {
+function lineOwnerClass(players, line, useNeutralClaimedLines) {
+  if (useNeutralClaimedLines) {
+    return "line-claimed";
+  }
+
   const index = players.findIndex((player) => player.id === line.claimedBy);
   if (index === 0) {
     return "line-player-one";
@@ -16,7 +20,7 @@ function boxOwnerClass(players, box) {
   return index === 0 ? "box-player-one" : "box-player-two";
 }
 
-export function Board({ game, disabled, onMove }) {
+export function Board({ game, disabled, onMove, useNeutralClaimedLines = false }) {
   const rows = [];
 
   for (let row = 0; row < game.gridSize * 2 + 1; row += 1) {
@@ -41,7 +45,7 @@ export function Board({ game, disabled, onMove }) {
           <button
             key={`${row}-${col}`}
             type="button"
-            className={`board-line board-line-horizontal ${line ? `claimed ${lineOwnerClass(game.players, line)}` : ""}`}
+            className={`board-line board-line-horizontal ${line ? `claimed ${lineOwnerClass(game.players, line, useNeutralClaimedLines)}` : ""}`}
             disabled={disabled || Boolean(line)}
             onClick={() => onMove({ orientation: Orientation.HORIZONTAL, row: lineRow, col: lineCol })}
             aria-label={`Claim horizontal line ${lineRow}, ${lineCol}`}
@@ -61,7 +65,7 @@ export function Board({ game, disabled, onMove }) {
           <button
             key={`${row}-${col}`}
             type="button"
-            className={`board-line board-line-vertical ${line ? `claimed ${lineOwnerClass(game.players, line)}` : ""}`}
+            className={`board-line board-line-vertical ${line ? `claimed ${lineOwnerClass(game.players, line, useNeutralClaimedLines)}` : ""}`}
             disabled={disabled || Boolean(line)}
             onClick={() => onMove({ orientation: Orientation.VERTICAL, row: lineRow, col: lineCol })}
             aria-label={`Claim vertical line ${lineRow}, ${lineCol}`}
