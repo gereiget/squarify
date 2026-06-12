@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import { POLL_INTERVAL_MS, API_BASE_URL } from "./config";
+import { createGameSoundPlayer } from "./audio";
 import { Board } from "./components/Board";
 import { applyLocalMove, createLocalGame, GameStatus, normalizeGame } from "./gameEngine";
 
@@ -25,12 +26,61 @@ export default function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const pollRef = useRef(null);
+  const previousGameRef = useRef(null);
+  const soundPlayerRef = useRef(null);
 
-  useEffect(() => () => window.clearInterval(pollRef.current), []);
+  if (!soundPlayerRef.current) {
+    soundPlayerRef.current = createGameSoundPlayer();
+  }
+
+  useEffect(() => () => {
+    window.clearInterval(pollRef.current);
+    soundPlayerRef.current?.release();
+  }, []);
+
+  useEffect(() => {
+    if (!game) {
+      previousGameRef.current = null;
+      return;
+    }
+
+    if (mode !== modes.ONLINE) {
+      previousGameRef.current = game;
+      return;
+    }
+
+    const previousGame = previousGameRef.current;
+    if (!previousGame || previousGame.gameId !== game.gameId) {
+      previousGameRef.current = game;
+      return;
+    }
+
+    const newLine = game.lines.find(
+      (line) =>
+        !previousGame.lines.some(
+          (previousLine) =>
+            previousLine.orientation === line.orientation &&
+            previousLine.row === line.row &&
+            previousLine.col === line.col
+        )
+    );
+
+    if (newLine?.claimedBy && newLine.claimedBy !== localPlayerId) {
+      const completedBoxes = game.boxes.length - previousGame.boxes.length;
+      if (completedBoxes > 0) {
+        soundPlayerRef.current?.playOtherBox();
+      } else {
+        soundPlayerRef.current?.playOtherLine();
+      }
+    }
+
+    previousGameRef.current = game;
+  }, [game, localPlayerId, mode]);
 
   function resetToMenu() {
     window.clearInterval(pollRef.current);
     pollRef.current = null;
+    previousGameRef.current = null;
     setScreen(screens.MENU);
     setMode(modes.LOCAL);
     setGame(null);
@@ -114,7 +164,14 @@ export default function App() {
 
     if (mode === modes.LOCAL) {
       try {
-        setGame((current) => applyLocalMove(current, current.currentPlayerId, line));
+        const nextGame = applyLocalMove(game, game.currentPlayerId, line);
+        const completedBoxes = nextGame.boxes.length - game.boxes.length;
+        setGame(nextGame);
+        if (completedBoxes > 0) {
+          soundPlayerRef.current?.playBox();
+        } else {
+          soundPlayerRef.current?.playLine();
+        }
       } catch (moveError) {
         setError(moveError.message);
       }
@@ -134,7 +191,14 @@ export default function App() {
         row: line.row,
         col: line.col
       });
-      setGame(normalizeGame(response.game));
+      const nextGame = normalizeGame(response.game);
+      const completedBoxes = nextGame.boxes.length - game.boxes.length;
+      setGame(nextGame);
+      if (completedBoxes > 0) {
+        soundPlayerRef.current?.playBox();
+      } else {
+        soundPlayerRef.current?.playLine();
+      }
     } catch (moveError) {
       setError(moveError.message || "Could not submit move.");
     } finally {

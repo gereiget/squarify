@@ -44,7 +44,7 @@ export function applyLocalMove(state, playerId, line) {
     throw new Error("Move is outside the board.");
   }
 
-  const nextLines = [...state.lines, line];
+  const nextLines = [...state.lines, { ...line, claimedBy: playerId }];
   const completedBoxes = candidateBoxes(state.gridSize, line)
     .filter(({ row, col }) => !state.boxes.some((box) => box.row === row && box.col === col))
     .filter(({ row, col }) => isBoxComplete(nextLines, row, col))

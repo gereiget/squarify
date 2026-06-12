@@ -2,7 +2,13 @@ import { Orientation } from "../gameEngine";
 
 function lineOwnerClass(players, line) {
   const index = players.findIndex((player) => player.id === line.claimedBy);
-  return index === 0 ? "line-player-one" : "line-player-two";
+  if (index === 0) {
+    return "line-player-one";
+  }
+  if (index === 1) {
+    return "line-player-two";
+  }
+  return "line-claimed";
 }
 
 function boxOwnerClass(players, box) {
