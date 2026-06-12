@@ -7,3 +7,12 @@ services:
     ports:
       - "127.0.0.1:${HOST_BACKEND_PORT:-3000}:3000"
     restart: unless-stopped
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://games.umalii.com/squarify-api/}
+        VITE_APP_BASE_PATH: ${VITE_APP_BASE_PATH:-/squarify/}
+    ports:
+      - "127.0.0.1:${HOST_FRONTEND_PORT:-3011}:80"
+    restart: unless-stopped

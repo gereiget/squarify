@@ -5,7 +5,7 @@ Squarify is a complete Dots and Boxes MVP with:
 - `android/`: native Android app in Kotlin + Jetpack Compose
 - `frontend/`: React + Vite web app for desktop and mobile browsers
 - `backend/`: Node.js + Express multiplayer API in TypeScript
-- `docker-compose.yml`: VPS backend deployment entrypoint
+- `docker-compose.yml`: VPS deployment entrypoint for backend and web frontend
 
 Deployment target:
 
@@ -100,6 +100,15 @@ cd frontend
 npm run build
 ```
 
+### Docker deployment model
+
+On the VPS:
+
+- `backend` runs in Docker and is published only to `127.0.0.1:${HOST_BACKEND_PORT}`
+- `frontend` runs in Docker with Nginx and is published only to `127.0.0.1:${HOST_FRONTEND_PORT}`
+- Caddy remains the only public-facing entrypoint
+- the root `games.umalii.com` landing page can stay as a static Caddy-served folder
+
 ### Android
 
 Open `android/` in Android Studio, or use:
@@ -145,7 +154,10 @@ Edit `/opt/games-umalii/squarify/.env`:
 
 ```env
 HOST_BACKEND_PORT=3010
+HOST_FRONTEND_PORT=3011
 CORS_ORIGIN=https://games.umalii.com
+VITE_API_BASE_URL=https://games.umalii.com/squarify-api/
+VITE_APP_BASE_PATH=/squarify/
 ```
 
 If you need more than one allowed origin, use a comma-separated list:
@@ -154,18 +166,21 @@ If you need more than one allowed origin, use a comma-separated list:
 CORS_ORIGIN=https://games.umalii.com,https://staging.example.com
 ```
 
-### 3. Start backend container
+### 3. Start backend and frontend containers
 
 ```bash
 cd /opt/games-umalii/squarify
 docker compose up -d --build
 ```
 
-Why `HOST_BACKEND_PORT`:
+Why these ports:
 
 - the backend inside Docker listens on container port `3000`
 - Docker publishes that container port to a host port you choose
 - for your VPS, use `3010` so it does not conflict with existing services
+- the frontend container listens on container port `80`
+- Docker publishes that to a host port you choose
+- for your VPS, use `3011` so Caddy can reverse proxy to it without colliding with anything else
 
 ### 4. Verify backend before touching Caddy
 
@@ -188,35 +203,12 @@ For your VPS with `HOST_BACKEND_PORT=3010`, use:
 curl http://127.0.0.1:3010/health
 ```
 
-## Frontend deployment for `games.umalii.com/squarify/`
-
-### 1. Build the frontend
+### 5. Verify frontend container before touching Caddy
 
 ```bash
-cd /opt/games-umalii/squarify/frontend
-cp .env.example .env
-```
-
-Edit `/opt/games-umalii/squarify/frontend/.env`:
-
-```env
-VITE_API_BASE_URL=https://games.umalii.com/squarify-api/
-VITE_APP_BASE_PATH=/squarify/
-```
-
-Build:
-
-```bash
-cd /opt/games-umalii/squarify/frontend
-npm install
-npm run build
-```
-
-### 2. Copy built frontend to a static folder
-
-```bash
-sudo mkdir -p /var/www/games-umalii/squarify
-sudo rsync -av --delete /opt/games-umalii/squarify/frontend/dist/ /var/www/games-umalii/squarify/
+cd /opt/games-umalii/squarify
+docker compose logs --tail=100 frontend
+curl -I http://127.0.0.1:3011/
 ```
 
 ## Landing page deployment for `games.umalii.com`
@@ -226,8 +218,8 @@ This repo also includes a static landing page that lists the available games and
 Deploy it with:
 
 ```bash
-sudo mkdir -p /var/www/games-umalii/home
-sudo rsync -av --delete /opt/games-umalii/squarify/portal/ /var/www/games-umalii/home/
+mkdir -p /opt/games-umalii/site/root
+rsync -av --delete /opt/games-umalii/squarify/portal/ /opt/games-umalii/site/root/
 ```
 
 ## Caddy configuration
@@ -251,13 +243,11 @@ handle_path /squarify-api/* {
 redir /squarify /squarify/ 308
 
 handle_path /squarify/* {
-    root * /var/www/games-umalii/squarify
-    try_files {path} /index.html
-    file_server
+    reverse_proxy 127.0.0.1:3011
 }
 
 handle {
-    root * /var/www/games-umalii/home
+    root * /opt/games-umalii/site/root
     file_server
 }
 ```
@@ -266,7 +256,7 @@ Important:
 
 - `handle_path /squarify-api/*` strips `/squarify-api` before proxying
 - so `/squarify-api/api/games` reaches the backend as `/api/games`
-- `try_files {path} /index.html` keeps the frontend SPA working under `/squarify/`
+- `handle_path /squarify/*` strips `/squarify` before proxying to the frontend container
 - the final `handle` serves the root `games.umalii.com` landing page
 
 ### Validate and reload Caddy
@@ -282,6 +272,7 @@ After deployment:
 
 ```bash
 curl https://games.umalii.com/squarify-api/health
+curl -I https://games.umalii.com/squarify/
 ```
 
 Then open:
