@@ -52,6 +52,9 @@ squarify/
 - `POST /api/games/:gameId/move`
 - `POST /api/games/:gameId/restart`
 - `DELETE /api/games/:gameId`
+- `GET /api/admin/games` (Basic auth)
+- `POST /api/admin/config` (Basic auth)
+- `GET /admin/games` (Basic auth HTML dashboard)
 
 The backend enforces:
 
@@ -61,6 +64,7 @@ The backend enforces:
 - out-of-bounds move rejection
 - bonus turns when a player closes a box
 - winner calculation when the board is full
+- automatic cleanup of stale waiting, active, and finished sessions
 
 ## Local development
 
@@ -158,6 +162,12 @@ HOST_FRONTEND_PORT=3011
 CORS_ORIGIN=https://games.umalii.com
 VITE_API_BASE_URL=https://games.umalii.com/squarify-api/
 VITE_APP_BASE_PATH=/squarify/
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=replace-this
+WAITING_GAME_TTL_MS=1800000
+ACTIVE_GAME_TTL_MS=43200000
+FINISHED_GAME_TTL_MS=3600000
+GAME_CLEANUP_INTERVAL_MS=300000
 ```
 
 If you need more than one allowed origin, use a comma-separated list:
@@ -278,6 +288,7 @@ curl -I https://games.umalii.com/squarify/
 Then open:
 
 - `https://games.umalii.com/squarify/`
+- `https://games.umalii.com/squarify-api/admin/games` if you proxy `/admin/*` to the backend, or your backend host `/admin/games` directly
 
 ## Android production backend URL
 
@@ -306,3 +317,28 @@ Verified locally:
 - backend storage is in-memory only, so active online games reset on container restart
 - online play uses polling every 1.5 seconds instead of WebSockets
 - Android debug sounds use generated tones, not bundled audio files
+
+## Session lifecycle
+
+By default the backend removes stale sessions automatically:
+
+- waiting lobby: deleted after 30 minutes without activity
+- active game: deleted after 12 hours without activity
+- finished game: deleted after 60 minutes without activity
+
+These are controlled with:
+
+- `WAITING_GAME_TTL_MS`
+- `ACTIVE_GAME_TTL_MS`
+- `FINISHED_GAME_TTL_MS`
+- `GAME_CLEANUP_INTERVAL_MS`
+
+The admin dashboard and admin API both show each game's `updatedAt`, idle time, and expiry time.
+The admin dashboard also lets you change the timeout values live for the running backend process.
+
+Important:
+
+- admin timeout edits apply immediately to the running backend
+- they do not rewrite `.env` automatically
+- if the container restarts, the backend will start again from the `.env` values
+- so after changing values in admin, also update the server `.env` if you want them to persist
