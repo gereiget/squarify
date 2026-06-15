@@ -121,17 +121,18 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
   <style>
     :root {
       color-scheme: light;
-      --bg: #f4efe6;
-      --panel: rgba(255,255,255,0.88);
-      --panel-strong: #ffffff;
+      --bg: #f3ede2;
+      --panel: rgba(255,255,255,0.78);
+      --panel-strong: rgba(255,255,255,0.96);
       --ink: #172033;
       --muted: #5f6b7a;
-      --line: #d7d7cc;
+      --line: rgba(23,32,51,0.10);
       --accent: #0f766e;
-      --accent-2: #c08429;
+      --accent-2: #b98429;
+      --accent-soft: rgba(15,118,110,0.10);
       --danger: #a63d40;
-      --shadow: 0 18px 50px rgba(23,32,51,0.12);
-      font-family: "Segoe UI", Arial, sans-serif;
+      --shadow: 0 24px 70px rgba(23,32,51,0.13);
+      font-family: Arial, sans-serif;
     }
     * { box-sizing: border-box; }
     body {
@@ -142,38 +143,54 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
         radial-gradient(circle at top right, rgba(192,132,41,0.16), transparent 28%),
         linear-gradient(180deg, #fbf8f2 0%, var(--bg) 100%);
     }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(115deg, rgba(255,255,255,0.12), transparent 26%, transparent 74%, rgba(255,255,255,0.14)),
+        repeating-linear-gradient(90deg, rgba(23,32,51,0.02), rgba(23,32,51,0.02) 1px, transparent 1px, transparent 24px);
+      opacity: 0.4;
+    }
     main {
+      position: relative;
       max-width: 1440px;
       margin: 0 auto;
-      padding: 28px 20px 60px;
+      padding: 32px 20px 60px;
     }
     .hero {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
       align-items: end;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .hero h1 {
-      margin: 0 0 8px;
-      font-size: clamp(32px, 4vw, 56px);
-      line-height: 0.95;
+      margin: 0 0 10px;
+      font-size: clamp(38px, 5vw, 72px);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+      font-family: Georgia, "Times New Roman", serif;
     }
     .hero p {
       margin: 0;
       color: var(--muted);
       max-width: 760px;
+      font-size: 20px;
+      line-height: 1.45;
     }
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 10px 14px;
-      background: rgba(255,255,255,0.78);
-      border: 1px solid rgba(23,32,51,0.08);
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
       border-radius: 999px;
       box-shadow: var(--shadow);
       font-size: 14px;
+      margin-bottom: 18px;
     }
     .grid {
       display: grid;
@@ -184,14 +201,15 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
       margin-bottom: 20px;
     }
     .panel {
+      min-width: 0;
       background: var(--panel);
-      border: 1px solid rgba(23,32,51,0.08);
-      border-radius: 24px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
       box-shadow: var(--shadow);
       backdrop-filter: blur(14px);
     }
     .stat {
-      padding: 18px;
+      padding: 20px;
     }
     .stat h2, .section-title h2 {
       margin: 0;
@@ -203,36 +221,42 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
     .stat strong {
       display: block;
       margin-top: 10px;
-      font-size: 30px;
+      font-size: 34px;
+      letter-spacing: -0.04em;
     }
     .layout {
       display: grid;
-      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-      gap: 16px;
+      grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+      gap: 18px;
       align-items: start;
     }
     .stack {
       display: grid;
       gap: 16px;
+      min-width: 0;
     }
     .section {
-      padding: 18px;
+      padding: 22px;
+      min-width: 0;
     }
     .section-title {
       display: flex;
       justify-content: space-between;
       gap: 12px;
       align-items: center;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
+      min-width: 0;
     }
     .section-title p {
       margin: 6px 0 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 15px;
+      line-height: 1.45;
     }
     .settings-form {
       display: grid;
-      gap: 12px;
+      gap: 14px;
+      min-width: 0;
     }
     label {
       display: grid;
@@ -245,9 +269,15 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
       padding: 12px 13px;
       border-radius: 14px;
       border: 1px solid var(--line);
-      background: rgba(255,255,255,0.95);
+      background: rgba(255,255,255,0.96);
       color: var(--ink);
       font: inherit;
+      min-width: 0;
+      outline: none;
+    }
+    input:focus {
+      border-color: rgba(15,118,110,0.38);
+      box-shadow: 0 0 0 4px rgba(15,118,110,0.08);
     }
     .actions {
       display: flex;
@@ -257,31 +287,63 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
     button {
       appearance: none;
       border: 0;
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 12px 16px;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #0d635c);
       color: white;
       font-weight: 700;
       cursor: pointer;
+      box-shadow: 0 16px 24px rgba(15,118,110,0.18);
     }
     button.secondary {
-      background: #e8ece8;
+      background: rgba(255,255,255,0.72);
       color: var(--ink);
+      box-shadow: none;
+      border: 1px solid var(--line);
     }
     .message {
       min-height: 20px;
       font-size: 14px;
       color: var(--muted);
+      line-height: 1.45;
     }
     .message.error {
       color: var(--danger);
     }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .live-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .live-tag::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 6px rgba(15,118,110,0.10);
+    }
     .cards {
       display: grid;
       gap: 14px;
+      min-width: 0;
     }
     .game-card {
-      padding: 16px;
+      padding: 18px;
       border-radius: 20px;
       background: var(--panel-strong);
       border: 1px solid rgba(23,32,51,0.08);
@@ -293,6 +355,11 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
       flex-wrap: wrap;
       margin-bottom: 12px;
     }
+    .game-name {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
     .chips {
       display: flex;
       gap: 8px;
@@ -303,6 +370,7 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
       border-radius: 999px;
       background: #f2f4f6;
       font-size: 12px;
+      white-space: nowrap;
     }
     .players {
       display: grid;
@@ -316,8 +384,16 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
       background: #f7f8fa;
       border: 1px solid rgba(23,32,51,0.06);
     }
-    .player strong { display: block; }
+    .player strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
     .muted { color: var(--muted); }
+    .subtle {
+      font-size: 13px;
+      color: var(--muted);
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -338,7 +414,8 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
     .table-wrap {
       overflow: auto;
       border-radius: 18px;
-      background: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.62);
+      min-width: 0;
     }
     .bar {
       height: 10px;
@@ -352,9 +429,38 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
       height: 100%;
       background: linear-gradient(90deg, var(--accent), var(--accent-2));
     }
+    .empty-state {
+      padding: 28px 18px;
+      border-radius: 18px;
+      border: 1px dashed rgba(23,32,51,0.16);
+      text-align: center;
+      color: var(--muted);
+      background: rgba(255,255,255,0.54);
+    }
+    .loading-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .loading-line {
+      height: 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(15,118,110,0.08), rgba(185,132,41,0.12), rgba(15,118,110,0.08));
+      background-size: 200% 100%;
+      animation: shimmer 1.25s linear infinite;
+    }
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to { background-position: -200% 0; }
+    }
     @media (max-width: 1080px) {
       .layout { grid-template-columns: 1fr; }
-      .hero { align-items: start; flex-direction: column; }
+      .hero { grid-template-columns: 1fr; align-items: start; }
+      .toolbar { justify-content: flex-start; }
+    }
+    @media (max-width: 720px) {
+      main { padding: 22px 14px 40px; }
+      .section, .stat { padding: 18px; }
+      .players { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -366,8 +472,12 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
         <h1>Squarify Admin Dashboard</h1>
         <p>Manage live timeout settings, inspect current multiplayer sessions, and review historical game and player data persisted by the backend.</p>
       </div>
-      <div class="actions">
+      <div class="toolbar">
+        <span class="live-tag" id="lastUpdated">Waiting for data</span>
         <button id="refreshBtn" class="secondary" type="button">Refresh Now</button>
+        <form method="post" action="./logout">
+          <button class="secondary" type="submit">Log Out</button>
+        </form>
       </div>
     </section>
 
@@ -428,7 +538,13 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
               <p>Live sessions, active lobbies, and finished games still within retention.</p>
             </div>
           </div>
-          <div id="currentGames" class="cards"></div>
+          <div id="currentGames" class="cards">
+            <div class="loading-grid">
+              <div class="loading-line" style="width: 40%"></div>
+              <div class="loading-line" style="width: 100%"></div>
+              <div class="loading-line" style="width: 82%"></div>
+            </div>
+          </div>
         </div>
 
         <div class="panel section">
@@ -465,6 +581,10 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
     const apiPath = ${JSON.stringify(options.apiPath)};
     const configPath = ${JSON.stringify(options.configPath)};
 
+    function resolvePath(path) {
+      return new URL(path, window.location.href).toString();
+    }
+
     function formatDate(value) {
       if (!value) return "-";
       return new Date(value).toLocaleString();
@@ -486,13 +606,18 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
       node.className = isError ? "message error" : "message";
     }
 
+    function setLastUpdated(value) {
+      const node = document.getElementById("lastUpdated");
+      node.textContent = value ? "Last refresh " + formatDate(value) : "Waiting for data";
+    }
+
     function renderOverview(data) {
       const topPlayer = data.playerHistory[0];
       const overview = [
         { title: "Live Games", value: String(data.currentGames.length), detail: "Current sessions retained in storage" },
         { title: "Archived Matches", value: String(data.history.length), detail: "Historical records available to admin" },
         { title: "Top Player", value: topPlayer ? topPlayer.name : "-", detail: topPlayer ? topPlayer.wins + " wins" : "No archived games yet" },
-        { title: "Settings", value: formatDuration(data.config.activeGameTtlMs), detail: "Active-game timeout" }
+        { title: "Active Timeout", value: formatDuration(data.config.activeGameTtlMs), detail: "Runtime retention window for live games" }
       ];
 
       document.getElementById("overview").innerHTML = overview.map((item) => \`
@@ -515,15 +640,15 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
     function renderCurrentGames(games) {
       const container = document.getElementById("currentGames");
       if (!games.length) {
-        container.innerHTML = '<div class="game-card muted">No open games.</div>';
+        container.innerHTML = '<div class="empty-state">No open games right now.</div>';
         return;
       }
       container.innerHTML = games.map((game) => \`
         <article class="game-card">
           <div class="game-top">
             <div>
-              <strong>\${game.joinCode}</strong>
-              <div class="muted">Game \${game.gameId} • Match #\${game.matchNumber}</div>
+              <div class="game-name">\${game.joinCode}</div>
+              <div class="subtle">Game \${game.gameId} | Match #\${game.matchNumber}</div>
             </div>
             <div class="chips">
               <span class="chip">\${game.status}</span>
@@ -600,11 +725,15 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
     }
 
     async function loadDashboard() {
-      const response = await fetch(apiPath, { headers: { "Accept": "application/json" } });
+      const response = await fetch(resolvePath(apiPath), {
+        headers: { "Accept": "application/json" },
+        credentials: "same-origin"
+      });
       if (!response.ok) {
         throw new Error("Failed to load dashboard.");
       }
       const data = await response.json();
+      setLastUpdated(data.generatedAt || new Date().toISOString());
       renderOverview(data);
       renderSettings(data.config);
       renderCurrentGames(data.currentGames);
@@ -623,9 +752,10 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
           finishedGameTtlMs: Number(form.finishedGameTtlMs.value),
           cleanupIntervalMs: Number(form.cleanupIntervalMs.value)
         };
-        const response = await fetch(configPath, {
+        const response = await fetch(resolvePath(configPath), {
           method: "POST",
           headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          credentials: "same-origin",
           body: JSON.stringify(payload)
         });
         const body = await response.json().catch(() => ({}));
