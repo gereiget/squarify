@@ -4,6 +4,8 @@ services:
       context: ./backend
     env_file:
       - .env
+    volumes:
+      - ./backend/data:/app/data
     ports:
       - "127.0.0.1:${HOST_BACKEND_PORT:-3000}:3000"
     restart: unless-stopped

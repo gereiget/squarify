@@ -26,6 +26,8 @@ export interface Scores {
 export interface Game {
   gameId: string;
   joinCode: string;
+  matchNumber: number;
+  matchStartedAt: string;
   gridSize: number;
   players: Player[];
   currentPlayerId: string;

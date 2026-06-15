@@ -59,6 +59,8 @@ export function createGame(gridSize: number, playerName: string): { game: Game; 
   const game: Game = {
     gameId: createId("game"),
     joinCode: createJoinCode(),
+    matchNumber: 1,
+    matchStartedAt: now,
     gridSize,
     players: [firstPlayer],
     currentPlayerId: firstPlayer.id,
@@ -138,6 +140,8 @@ export function applyMove(game: Game, move: MoveInput): Game {
 }
 
 export function restartGame(game: Game): Game {
+  game.matchNumber += 1;
+  game.matchStartedAt = timestamp();
   game.lines = [];
   game.boxes = [];
   game.winner = null;

@@ -52,9 +52,10 @@ squarify/
 - `POST /api/games/:gameId/move`
 - `POST /api/games/:gameId/restart`
 - `DELETE /api/games/:gameId`
-- `GET /api/admin/games` (Basic auth)
+- `GET /api/admin/dashboard` (Basic auth)
+- `GET /api/admin/games` (Basic auth legacy JSON alias)
 - `POST /api/admin/config` (Basic auth)
-- `GET /admin/games` (Basic auth HTML dashboard)
+- `GET /admin/games` (Basic auth visual dashboard)
 
 The backend enforces:
 
@@ -65,6 +66,7 @@ The backend enforces:
 - bonus turns when a player closes a box
 - winner calculation when the board is full
 - automatic cleanup of stale waiting, active, and finished sessions
+- persistent storage of live games, admin settings, and archived match history when `backend/data` is mounted
 
 ## Local development
 
@@ -168,6 +170,8 @@ WAITING_GAME_TTL_MS=1800000
 ACTIVE_GAME_TTL_MS=43200000
 FINISHED_GAME_TTL_MS=3600000
 GAME_CLEANUP_INTERVAL_MS=300000
+STATE_FILE_PATH=/app/data/state.json
+MAX_HISTORY_RECORDS=2000
 ```
 
 If you need more than one allowed origin, use a comma-separated list:
@@ -314,7 +318,6 @@ Verified locally:
 
 ## Current limitations
 
-- backend storage is in-memory only, so active online games reset on container restart
 - online play uses polling every 1.5 seconds instead of WebSockets
 - Android debug sounds use generated tones, not bundled audio files
 
@@ -334,11 +337,31 @@ These are controlled with:
 - `GAME_CLEANUP_INTERVAL_MS`
 
 The admin dashboard and admin API both show each game's `updatedAt`, idle time, and expiry time.
-The admin dashboard also lets you change the timeout values live for the running backend process.
+The admin dashboard also lets you change the timeout values live for the running backend process, and those settings are persisted in the backend state file when `backend/data` is mounted.
 
 Important:
 
 - admin timeout edits apply immediately to the running backend
 - they do not rewrite `.env` automatically
-- if the container restarts, the backend will start again from the `.env` values
-- so after changing values in admin, also update the server `.env` if you want them to persist
+- with the default Docker volume mount, the backend keeps the last admin-saved values in `/app/data/state.json`
+- `.env` still matters because it provides the initial defaults if the state file does not exist yet
+- keep `.env` aligned with the values you want as the fallback baseline
+
+## Admin dashboard
+
+The visual admin dashboard shows:
+
+- current open games and lobbies
+- current players, IDs, scores, turn owner, and winner
+- current timeout settings
+- historical archived games
+- aggregated historical player stats
+
+Historical data is stored in the backend state file and includes:
+
+- finished games
+- restarted games
+- deleted games
+- expired waiting lobbies
+- expired active games
+- expired finished games

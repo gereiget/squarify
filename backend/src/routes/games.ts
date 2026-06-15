@@ -111,6 +111,7 @@ export function createGamesRouter(repository: GameRepository): Router {
     if (!game) {
       return res.status(404).json({ error: "Game not found." });
     }
+    repository.archiveForRestart(game.gameId);
     repository.save(restartGame(game));
     return res.json({ game });
   });
