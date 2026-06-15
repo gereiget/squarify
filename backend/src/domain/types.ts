@@ -4,6 +4,7 @@ export type GameStatus = "waiting" | "active" | "finished";
 export interface Player {
   id: string;
   name: string;
+  lastSeenIp: string | null;
 }
 
 export interface Line {

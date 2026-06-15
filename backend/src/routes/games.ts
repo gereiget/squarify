@@ -1,6 +1,6 @@
-import { Router } from "express";
+import { Request, Router } from "express";
 import { z } from "zod";
-import { applyMove, createGame, joinGame, restartGame } from "../domain/gameEngine.js";
+import { applyMove, createGame, joinGame, markPlayerSeen, restartGame } from "../domain/gameEngine.js";
 import { GameRepository } from "../repository/gameRepository.js";
 
 const createSchema = z.object({
@@ -28,6 +28,17 @@ function serializeGame(game: ReturnType<GameRepository["findById"]>) {
   return game;
 }
 
+function getClientIp(req: Request): string | null {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (typeof forwarded === "string" && forwarded.trim()) {
+    return forwarded.split(",")[0].trim();
+  }
+  if (Array.isArray(forwarded) && forwarded[0]?.trim()) {
+    return forwarded[0].split(",")[0].trim();
+  }
+  return req.ip || null;
+}
+
 export function createGamesRouter(repository: GameRepository): Router {
   const router = Router();
 
@@ -38,7 +49,7 @@ export function createGamesRouter(repository: GameRepository): Router {
     }
 
     try {
-      const { game, playerId } = createGame(parsed.data.gridSize, parsed.data.playerName);
+      const { game, playerId } = createGame(parsed.data.gridSize, parsed.data.playerName, getClientIp(req));
       repository.save(game);
       return res.status(201).json({
         gameId: game.gameId,
@@ -63,7 +74,7 @@ export function createGamesRouter(repository: GameRepository): Router {
     }
 
     try {
-      const result = joinGame(game, parsed.data.playerName);
+      const result = joinGame(game, parsed.data.playerName, getClientIp(req));
       repository.save(result.game);
       return res.json({
         gameId: result.game.gameId,
@@ -80,6 +91,10 @@ export function createGamesRouter(repository: GameRepository): Router {
     if (!game) {
       return res.status(404).json({ error: "Game not found." });
     }
+    const playerId = typeof req.query.playerId === "string" ? req.query.playerId : null;
+    if (playerId) {
+      repository.save(markPlayerSeen(game, playerId, getClientIp(req)));
+    }
     return res.json({ game: serializeGame(game) });
   });
 
@@ -94,6 +109,7 @@ export function createGamesRouter(repository: GameRepository): Router {
     }
 
     try {
+      markPlayerSeen(game, parsed.data.playerId, getClientIp(req));
       const updated = applyMove(game, parsed.data);
       repository.save(updated);
       return res.json({ game: serializeGame(updated) });
@@ -112,6 +128,9 @@ export function createGamesRouter(repository: GameRepository): Router {
       return res.status(404).json({ error: "Game not found." });
     }
     repository.archiveForRestart(game.gameId);
+    if (parsed.data.playerId) {
+      markPlayerSeen(game, parsed.data.playerId, getClientIp(req));
+    }
     repository.save(restartGame(game));
     return res.json({ game });
   });

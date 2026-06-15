@@ -16,6 +16,7 @@ export interface GameSummaryPlayer {
   id: string;
   name: string;
   score: number;
+  lastSeenIp: string | null;
   isCurrentTurn: boolean;
   isWinner: boolean;
 }
@@ -671,6 +672,7 @@ export function createDashboardHtml(options: DashboardHtmlOptions): string {
               <div class="player">
                 <strong>\${player.name}</strong>
                 <div class="muted">ID: \${player.id}</div>
+                <div class="muted">IP: \${player.lastSeenIp || "-"}</div>
                 <div>Score: \${player.score}</div>
                 <div>\${player.isCurrentTurn ? "Current turn" : ""} \${player.isWinner ? "Winner" : ""}</div>
               </div>
@@ -1028,6 +1030,7 @@ export class GameRepository {
         id: player.id,
         name: player.name,
         score: game.scores[player.id] ?? 0,
+        lastSeenIp: player.lastSeenIp,
         isCurrentTurn: player.id === game.currentPlayerId,
         isWinner: player.id === game.winner
       })),

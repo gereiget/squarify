@@ -343,6 +343,7 @@ export function createApp() {
   };
 
   app.disable("x-powered-by");
+  app.set("trust proxy", true);
   app.use(cors({ origin: buildCorsOrigin() }));
   app.use(express.json({ limit: "32kb" }));
   app.use(express.urlencoded({ extended: false }));

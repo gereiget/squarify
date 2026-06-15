@@ -47,13 +47,14 @@ function listCompletedBoxes(game: Game, move: MoveInput): Box[] {
     .map(({ row, col }) => ({ row, col, claimedBy: move.playerId }));
 }
 
-export function createGame(gridSize: number, playerName: string): { game: Game; playerId: string } {
+export function createGame(gridSize: number, playerName: string, clientIp: string | null = null): { game: Game; playerId: string } {
   if (!GRID_SIZES.has(gridSize)) {
     throw new Error("Grid size must be 3, 4, or 5.");
   }
   const firstPlayer: Player = {
     id: createId("player"),
-    name: playerName.trim() || "Player 1"
+    name: playerName.trim() || "Player 1",
+    lastSeenIp: clientIp
   };
   const now = timestamp();
   const game: Game = {
@@ -76,7 +77,7 @@ export function createGame(gridSize: number, playerName: string): { game: Game; 
   return { game, playerId: firstPlayer.id };
 }
 
-export function joinGame(game: Game, playerName: string): { game: Game; playerId: string } {
+export function joinGame(game: Game, playerName: string, clientIp: string | null = null): { game: Game; playerId: string } {
   if (game.status !== "waiting") {
     throw new Error("This game is not accepting new players.");
   }
@@ -85,7 +86,8 @@ export function joinGame(game: Game, playerName: string): { game: Game; playerId
   }
   const player: Player = {
     id: createId("player"),
-    name: playerName.trim() || "Player 2"
+    name: playerName.trim() || "Player 2",
+    lastSeenIp: clientIp
   };
   game.players.push(player);
   game.scores[player.id] = 0;
@@ -135,6 +137,16 @@ export function applyMove(game: Game, move: MoveInput): Game {
     game.winner = firstScore === secondScore ? null : firstScore > secondScore ? first.id : second.id;
   }
 
+  game.updatedAt = timestamp();
+  return game;
+}
+
+export function markPlayerSeen(game: Game, playerId: string, clientIp: string | null): Game {
+  const player = game.players.find((entry) => entry.id === playerId);
+  if (!player) {
+    return game;
+  }
+  player.lastSeenIp = clientIp;
   game.updatedAt = timestamp();
   return game;
 }
