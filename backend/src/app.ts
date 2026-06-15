@@ -378,7 +378,7 @@ export function createApp() {
   app.get("/admin/login", (req, res) => {
     const sessionToken = parseCookies(req.headers.cookie).squarify_admin_session;
     if (sessionToken && adminSessions.has(sessionToken)) {
-      return res.redirect("/admin/games");
+      return res.redirect("./games");
     }
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.send(createLoginHtml());
@@ -396,7 +396,7 @@ export function createApp() {
     const token = crypto.randomBytes(24).toString("hex");
     adminSessions.add(token);
     res.setHeader("Set-Cookie", buildSessionCookie(token));
-    return res.redirect("/admin/games");
+    return res.redirect("./games");
   });
 
   app.post("/admin/logout", requireAdminPage, (req, res) => {
@@ -405,7 +405,7 @@ export function createApp() {
       adminSessions.delete(sessionToken);
     }
     res.setHeader("Set-Cookie", clearSessionCookie());
-    return res.redirect("/admin/login");
+    return res.redirect("./login");
   });
 
   app.get("/api/admin/dashboard", (_req, res) => {
@@ -434,7 +434,7 @@ export function createApp() {
   });
 
   app.get("/admin", (_req, res) => {
-    res.redirect("/admin/games");
+    res.redirect("./admin/games");
   });
 
   app.get("/admin/games", requireAdminPage, (_req, res) => {
