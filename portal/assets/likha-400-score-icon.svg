@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Likha &amp; 400 Score icon</title>
+  <desc id="desc">Two fanned playing cards, the front one showing a heart and the number 400.</desc>
+
+  <rect width="512" height="512" rx="88" fill="#FFF7ED"/>
+
+  <g transform="rotate(-14 256 256)">
+    <rect x="146" y="116" width="200" height="280" rx="24" fill="#176087"/>
+    <rect x="166" y="136" width="160" height="240" rx="14" fill="none" stroke="#FFF7ED" stroke-width="8" stroke-opacity="0.5"/>
+  </g>
+
+  <g transform="rotate(10 256 256)">
+    <rect x="176" y="106" width="200" height="280" rx="24" fill="#FFFFFF" stroke="#1C1B1A" stroke-width="10"/>
+    <path d="M276 196 C276 172 244 166 244 192 C244 214 276 232 276 242 C276 232 308 214 308 192 C308 166 276 172 276 196 Z" fill="#D96C06"/>
+    <text x="276" y="320" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="68" font-weight="700" fill="#1C1B1A">400</text>
+  </g>
+</svg>
